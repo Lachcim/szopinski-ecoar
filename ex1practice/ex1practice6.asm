@@ -1,4 +1,4 @@
-# remove the specified range from string
+# remove digits from string
 
         .data
 buf:    .byte 0:255                 # prepare string buffer and its length
@@ -10,31 +10,19 @@ buflen: .word 255
         lbu     $a1, buflen         # specify buffer length
         syscall
         
-        li      $v0, 5              # call read_int
-        syscall
-        move    $s0, $v0            # store first range endpoint
-        li      $v0, 5              # call read_int again
-        syscall
-        move    $s1, $v0            # store second range endpoint
-        
-        bleu    $s0, $s1, start     # reorder endpoints if needed
-        move    $t0, $s0
-        move    $s0, $s1
-        move    $s1, $t0
-        
-start:  li      $t0, 0              # string iterator
+        li      $t0, 0              # currently processed string index
         li      $v0, 11             # prepare to call print_char
+        
+iterst: lbu     $a0, buf($t0)       # dereference char pointer
+        beqz    $a0, stop           # stop if end reached
+        
+        bltu    $a0, 48, print      # print if not a digit
+        bgtu    $a0, 57, print
+        j       cont                # otherwise skip
 
-iterst: lbu     $a0, buf($t0)       # dereference operator
-        beqz    $a0, stop           # stop if there are no more characters
-        
-        bltu    $t0, $s0, cont      # if outside of range, print
-        bgtu    $t0, $s1, cont
-        j       skip                # otherwise, skip
-        
-cont:   syscall                     # call print_char
-skip:   addiu   $t0, $t0, 1         # increment string index
-        j       iterst              # iterate loop
+print:  syscall                     # call print_char
+cont:   addiu   $t0, $t0, 1         # increment string index
+        j       iterst              # reiterate
         
 stop:   li      $v0, 10             # exit program
         syscall
