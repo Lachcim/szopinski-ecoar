@@ -35,7 +35,7 @@ incfor: addiu   $t0, $t0, 1         # increment the iterator
         lbu     $t2, buf($t0)       # dereference
         bltu    $t2, 48, incfor     # increment again if not a digit
         bgtu    $t2, 57, incfor
-retfor: jr $ra                      # return to caller
+retfor: jr      $ra                 # return to caller
         
 # increment the reverse iterator
 increv: addiu   $t1, $t1, -1        # same as before
@@ -43,4 +43,4 @@ increv: addiu   $t1, $t1, -1        # same as before
         lbu     $t3, buf($t1)
         bltu    $t3, 48, increv
         bgtu    $t3, 57, increv
-retrev: jr $ra
+retrev: jr      $ra
