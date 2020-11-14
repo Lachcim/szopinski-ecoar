@@ -15,7 +15,7 @@ buflen: .word 255
         
 iterst: lbu     $a0, buf($t0)       # load current character into $a0 for future printing
 
-        beq     $a0, $zero, stop    # stop if there are no more characters
+        beqz    $a0, stop    # stop if there are no more characters
         bltu    $a0, 48, cont       # continue if not a digit
         bgtu    $a0, 57, cont
 
