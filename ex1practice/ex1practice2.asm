@@ -18,7 +18,7 @@ buflen: .word 255
         li      $s3, 0              # curent substring length
         
 iterst: lbu     $t1, buf($t0)       # load current character into $t1
-        beq     $t1, $zero, stop    # stop if there are no more characters
+        beqz    $t1, stop           # stop if there are no more characters
         
         bltu    $t1, 48, snip       # if not a digit, snip current substring
         bgtu    $t1, 57, snip
