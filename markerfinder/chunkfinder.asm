@@ -33,8 +33,18 @@ stop:   sw      $s0, nextin         # save next index to check
         jr      $ra                 # return to caller
 
 explore_chunk:
-        div     $zero, $s0, 320     # calculate start x/y by dividing index by buffer width
-        mfhi    $t0
-        mflo    $t1
+        move    $s6, $a0            # save arguments and return address
+        move    $s5, $a1            # will be used for queue calls
+        move    $s4, $ra
         
+        div     $zero, $s0, 320     # calculate start x/y by dividing index by buffer width
+        mfhi    $a0
+        mflo    $a1        
+        jal     queue_push          # add initial position to BFS queue
+        
+        # todo
+        
+        move    $a0, $s6            # restore arguments and return to caller
+        move    $a1, $s5
+        move    $ra, $s4
         jr      $ra
