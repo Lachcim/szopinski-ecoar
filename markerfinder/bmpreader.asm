@@ -43,7 +43,7 @@ read_bitmap:
         ulw     $t1, buffer + 22
         sh      $t1, 0($a3)
         
-skprnd: add     $t2, $t1, -1        # obtain pointer to the first pixel
+        add     $t2, $t1, -1        # obtain pointer to the first pixel
         mul     $t2, $t2, 320       # (lower left corner of the bitmap)
         add     $t2, $t2, $t8       # imgbuf + (height - 1) * 320
         
