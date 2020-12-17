@@ -1,5 +1,5 @@
 # QUEUE.ASM
-# A fixed-size FIFO data structure.
+# A fixed-size FIFO data structure. Stores values in pairs of half-words.
 
         .data
 queue:  .word   0:1023              # underlying memory block
@@ -13,14 +13,20 @@ qend:   .half   0                   # next available element of the queue
         
 queue_push:
         lh      $t9, qend           # load queue end position
-        sw      $a0, queue($t9)     # store value at end pointer
+        sh      $a0, queue($t9)     # store first value at end pointer
+        or      $t9, $t9, 2         # offset by two
+        sh      $a1, queue($t9)     # store second value
+        andi    $t9, $t9, -3
         
         la      $t8, qend           # specify quend as store destination
         j       increm              # jump to incrementing subroutine
         
 queue_pop:
         lh      $t9, qstart         # load queue start position
-        lw      $v0, queue($t9)     # load value from start pointer to return register
+        lh      $v0, queue($t9)     # load first value from start pointer to return register
+        or      $t9, $t9, 2         # offset by two
+        lh      $v1, queue($t9)     # load second value
+        andi    $t9, $t9, -3
         
         la      $t8, qstart         # specify qstart as store destination and proceed to incrementing subroutine
         
