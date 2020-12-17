@@ -12,17 +12,22 @@ qend:   .half   0                   # next available element of the queue
         
 queue_push:
         lh      $t9, qend           # load queue end position
-        
         sw      $a0, queue($t9)     # store value at end pointer
         
-        beq     $t9, 1916, rollov   # roll over if end of array reached
-        
-        add,    $t9, $t9, 4         # increment end position
-        sh      $t9, qend           # save end position
-        jr      $ra                 # return
-
-rollov: sh      $zero, qend         # set end position to zero
-        jr      $ra                 # return
+        la      $t8, qend           # specify quend as store destination
+        j       increm              # jump to incrementing subroutine
         
 queue_pop:
-        jr      $ra
+        lh      $t9, qstart         # load queue start position
+        lw      $v0, queue($t9)     # load value from start pointer to return register
+        
+        la      $t8, qstart         # specify qstart as store destination and proceed to incrementing subroutine
+        
+increm: beq     $t9, 1916, rollov   # roll over if end of array reached
+
+        add     $t9, $t9, 4         # increment index
+        sh      $t9, 0($t8)         # store index at destination
+        jr      $ra                 # return to caller
+
+rollov: sh      $zero, 0($t8)       # reset index and store it at destination
+        jr      $ra                 # return to caller
