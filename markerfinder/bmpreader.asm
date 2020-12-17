@@ -2,7 +2,7 @@
 # Reads the BMP file into a bitmap.
 
         .data
-buffer: .byte   0:192               # buffer for file contents
+buffer: .byte   0:54                # buffer for file contents
 
         # error strings for bmp parser
 err1:   .asciiz "Couldn't open input file"
@@ -39,15 +39,53 @@ read_bitmap:
         lh      $t0, buffer + 28    # check bpp
         bne     $t0, 24, dsper4
         
-        ulw     $t0, buffer + 18     # extract width and height
+        ulw     $t0, buffer + 18    # extract width and height
         usw     $t0, 0($t9)
-        ulw     $t0, buffer + 22
-        usw     $t0, 0($a3)
+        ulw     $t1, buffer + 22
+        usw     $t1, 0($a3)
         
-        li      $v0, 16             # close file
+skprnd: add     $t2, $t1, -1        # obtain pointer to the first pixel
+        mul     $t2, $t2, 320       # (lower left corner of the bitmap)
+        add     $t2, $t2, $t8       # imgbuf + (height - 1) * 320
+        
+        mul     $t1, $t0, $t1       # calculate the number of pixels to be read (width * height)
+        li      $t3, 0              # position in the current line
+        
+        not     $t4, $t0            # calculate line feed / carriage return offset
+        add     $t4, $t4, -319      # -(width + 1) - 319 = -320 - width
+ 
+readpx: li      $a2, 3              # limit read bytes to 3
+        li      $v0, 14             # read single pixel from the file
         syscall
         
-        jr      $ra                 # return to caller
+        lb      $t5, buffer + 0     # check all components of pixel
+        bnez    $t5, calcin         # if any of them is greater than zero,
+        lb      $t5, buffer + 1     # mark the pixel as non-black (0, equivalent
+        bnez    $t5, calcin         # to no-op due to buffer initialization)
+        lb      $t5, buffer + 2
+        bnez    $t5, calcin
+        
+        li      $t5, 1              # set the buffer at the pointer to 1
+        sb      $t5, 0($t2)
+        
+calcin: add     $t2, $t2, 1         # increment the buffer pointer
+        add     $t3, $t3, 1         # increment the position within line
+        
+        bne     $t3, $t0, cont      # if end of line reached
+        add     $t2, $t2, $t4       # move pointer to start of prev line
+        li      $t3, 0              # reset position in line
+        
+        beqz    $t5, cont           # read and discard byte padding, if there is any
+        and     $a2, $t0, 3         # calculate byte padding as the remainder of (width / 4)
+        li      $v0, 14             
+        syscall
+
+cont:   add     $t1, $t1, -1        # decrement pixel counter
+        bgtz    $t1, readpx         # reiterate until there are no more pixels to read
+        
+        li      $v0, 16             # close the file and return to caller
+        syscall
+        jr      $ra
         
 dsper1: la      $a0, err1           # load error message to $a0 and print it
         j       perr
@@ -57,7 +95,9 @@ dsper3: la      $a0, err3
         j perr
 dsper4: la      $a0, err4
 
-perr:   li      $v0, 4              # print error
+perr:   li      $v0, 16             # close file
+        syscall
+        li      $v0, 4              # print error
         syscall
         li      $v0, 17             # exit with code 1
         li      $a0, 1
