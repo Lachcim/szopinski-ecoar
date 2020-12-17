@@ -9,23 +9,23 @@ nextin: .word   0                   # next start index for chunk search
         
 find_chunk:
         lw      $s0, nextin         # load next index to check
-        add     $s1, $a1, $s0       # obtain pointer to buffer at index
+        add     $t0, $a1, $s0       # obtain pointer to buffer at index
 
 pxloop: beq     $s0, 76799, fail    # stop search if end of buffer reached
         
-        lb      $s2, 0($s1)         # dereference buffer pointer
-        bne     $s2, 1, cont        # continue if pixel not black
+        lb      $t1, 0($t0)         # dereference buffer pointer
+        bne     $t1, 1, cont        # continue if pixel not black
         
-        move    $s3, $ra            # call chunk exploring subroutine
+        move    $s7, $ra            # call chunk exploring subroutine
         jal     explore_chunk
-        move    $ra, $s3
+        move    $ra, $s7
         
         add     $s0, $s0, 1         # increment index for next call
         li      $v0, 1              # return 1 when a chunk was found
         j       stop                # stop loop
 
 cont:   add     $s0, $s0, 1         # increment index and pointer
-        add     $s1, $s1, 1
+        add     $t0, $t0, 1
         j       pxloop              # reiterate
         
 fail:   li      $v0, 0              # return 0 if there are no more chunks
