@@ -89,9 +89,9 @@ cont:   add     $t1, $t1, -1        # decrement pixel counter
 dsper1: la      $a0, err1           # load error message to $a0 and print it
         j       perr
 dsper2: la      $a0, err2
-        j perr
+        j       perr
 dsper3: la      $a0, err3
-        j perr
+        j       perr
 dsper4: la      $a0, err4
 
 perr:   li      $v0, 16             # close file
