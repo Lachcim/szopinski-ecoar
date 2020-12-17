@@ -28,13 +28,13 @@ read_bitmap:
         li      $a2, 54
         syscall
         
-        lh      $t0, buffer         # check bmp marker
+        ulh     $t0, buffer         # check bmp marker
         bne     $t0, 0x4D42, dsper2 
         ulw     $t0, buffer + 14    # check header size
         bne     $t0, 40, dsper3
         ulw     $t0, buffer + 30    # check compression
         bnez    $t0, dsper3
-        lh      $t0, buffer + 28    # check bpp
+        ulh     $t0, buffer + 28    # check bpp
         bne     $t0, 24, dsper4
         
         ulw     $t0, buffer + 18    # extract width and height
