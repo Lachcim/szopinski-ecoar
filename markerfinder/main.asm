@@ -3,8 +3,8 @@
 
         .data
 imgbuf: .byte   0:76799             # buffer for the bitmap
-imgw:   .byte   0                   # bitmap width
-imgh:   .byte   0                   # bitmap height
+imgw:   .half   0                   # bitmap width
+imgh:   .half   0                   # bitmap height
 
 queue:  .word   0:479               # queue data structure for the BFS
 qstart: .half   0                   # first element of the queue

@@ -2,9 +2,8 @@
 # Reads the BMP file into a bitmap.
 
         .data
-buffer: .byte   0:54                # buffer for file contents
+buffer: .byte   0:53                # buffer for file contents
 
-        # error strings for bmp parser
 err1:   .asciiz "Couldn't open input file"
 err2:   .asciiz "Unrecognized file format"
 err3:   .asciiz "Unsupported BMP format"
@@ -40,9 +39,9 @@ read_bitmap:
         bne     $t0, 24, dsper4
         
         ulw     $t0, buffer + 18    # extract width and height
-        usw     $t0, 0($t9)
+        sh      $t0, 0($t9)
         ulw     $t1, buffer + 22
-        usw     $t1, 0($a3)
+        sh      $t1, 0($a3)
         
 skprnd: add     $t2, $t1, -1        # obtain pointer to the first pixel
         mul     $t2, $t2, 320       # (lower left corner of the bitmap)
@@ -59,16 +58,16 @@ readpx: li      $a2, 3              # limit read bytes to 3
         syscall
         
         lb      $t5, buffer + 0     # check all components of pixel
-        bnez    $t5, calcin         # if any of them is greater than zero,
+        bnez    $t5, calcnx         # if any of them is greater than zero,
         lb      $t5, buffer + 1     # mark the pixel as non-black (0, equivalent
-        bnez    $t5, calcin         # to no-op due to buffer initialization)
+        bnez    $t5, calcnx         # to no-op due to buffer initialization)
         lb      $t5, buffer + 2
-        bnez    $t5, calcin
+        bnez    $t5, calcnx
         
         li      $t5, 1              # set the buffer at the pointer to 1
         sb      $t5, 0($t2)
         
-calcin: add     $t2, $t2, 1         # increment the buffer pointer
+calcnx: add     $t2, $t2, 1         # increment the buffer pointer
         add     $t3, $t3, 1         # increment the position within line
         
         bne     $t3, $t0, cont      # if end of line reached
