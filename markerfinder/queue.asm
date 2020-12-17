@@ -2,7 +2,7 @@
 # A fixed-size FIFO data structure.
 
         .data
-queue:  .word   0:479               # underlying memory block
+queue:  .word   0:1023              # underlying memory block
 qstart: .half   0                   # first element of the queue
 qend:   .half   0                   # next available element of the queue
 
@@ -24,7 +24,7 @@ queue_pop:
         
         la      $t8, qstart         # specify qstart as store destination and proceed to incrementing subroutine
         
-increm: beq     $t9, 1916, rollov   # roll over if end of array reached
+increm: beq     $t9, 4092, rollov   # roll over if end of array reached
 
         add     $t9, $t9, 4         # increment index
         sh      $t9, 0($t8)         # store index at destination
