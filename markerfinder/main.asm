@@ -6,14 +6,7 @@ imgbuf: .byte   0:76799             # buffer for the bitmap
 imgw:   .half   0                   # bitmap width
 imgh:   .half   0                   # bitmap height
 
-queue:  .word   0:479               # queue data structure for the BFS
-qstart: .half   0                   # first element of the queue
-qend:   .half   0                   # next available element of the queue
-
-xmin:   .half   0                   # boundaries of the black group
-xmax:   .half   0                   # as discovered by the BFS
-ymin:   .half   0
-ymax:   .half   0
+bounds: .half   0:3                 # boundaries of chunk: xmin, xmax, ymin, ymax
 
 fname:  .asciiz "input.bmp"         # input filename
 
