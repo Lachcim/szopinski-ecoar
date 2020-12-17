@@ -4,7 +4,7 @@
         .data
 imgbuf: .byte   0:76799             # buffer for the bitmap
 bounds: .half   0:3                 # chunk boundaries: xmin, xmax, ymin, ymax
-fname:  .asciiz "input.bmp"         # input filename
+fname:  .asciiz "source.bmp"        # input filename
 comma:  .asciiz ", "                # comma for coordinate printing
 
         .text
