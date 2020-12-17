@@ -30,7 +30,7 @@ queue_pop:
         
         la      $t8, qstart         # specify qstart as store destination and proceed to incrementing subroutine
         
-increm: beq     $t9, 4092, rollov   # roll over if end of array reached
+increm: beq     $t9, 4088, rollov   # roll over if end of array reached
 
         add     $t9, $t9, 4         # increment index
         sh      $t9, 0($t8)         # store index at destination
