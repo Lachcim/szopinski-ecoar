@@ -18,6 +18,9 @@ fname:  .asciiz "input.bmp"         # input filename
         jal     read_bitmap
         
         la      $a0, bounds         # find next chunk
+        la      $a1, imgbuf
+        lh      $a2, imgw
+        lh      $a3, imgh
         jal     find_chunk
         
         li      $v0, 10             # exit

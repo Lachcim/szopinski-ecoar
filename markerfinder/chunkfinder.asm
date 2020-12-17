@@ -33,4 +33,8 @@ stop:   sw      $s0, nextin         # save next index to check
         jr      $ra                 # return to caller
 
 explore_chunk:
+        div     $zero, $s0, 320     # calculate start x/y by dividing index by buffer width
+        mfhi    $t0
+        mflo    $t1
+        
         jr      $ra
