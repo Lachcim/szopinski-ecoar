@@ -82,9 +82,11 @@ calcnx: add     $t2, $t2, 1         # increment the buffer pointer
 cont:   add     $t1, $t1, -1        # decrement pixel counter
         bgtz    $t1, readpx         # reiterate until there are no more pixels to read
         
-        li      $v0, 16             # close the file and return to caller
+        li      $v0, 16             # close the file
         syscall
-        jr      $ra
+        move    $a1, $t8            # restore arguments 1 and 2
+        move    $a2, $t9
+        jr      $ra                 # return to caller
         
 dsper1: la      $a0, err1           # load error message to $a0 and print it
         j       perr
