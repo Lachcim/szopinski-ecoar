@@ -42,18 +42,32 @@ explore_chunk:
         mflo    $a1        
         jal     queue_push          # add initial position to BFS queue
         
+        li      $t0, 320            # chunk boundaries: xmin, xmax, ymin, ymax
+        li      $t1, 0
+        li      $t2, 240
+        li      $t3, 0
+        
 exloop: jal     queue_pop           # pop next pixel from queue
 
-        mul     $t0, $v1, 320       # calculate the pixel's index in buffer
-        add     $t0, $t0, $v0
-        add     $t0, $t0, $s5       # turn index into pointer
-        lb      $t1, 0($t0)         # dereference pointer
+        mul     $t4, $v1, 320       # calculate the pixel's index in buffer
+        add     $t4, $t4, $v0
+        add     $t4, $t4, $s5       # turn index into pointer
+        lb      $t5, 0($t4)         # dereference pointer
         
-        bne     $t1, 1, skip        # skip pixel if not black
-        li      $t1, 2
-        sb      $t1, 0($t0)         # mark pixel as explored (code 2)
+        bne     $t5, 1, skip        # skip pixel if not black
+        li      $t5, 2
+        sb      $t5, 0($t4)         # mark pixel as explored (code 2)
         
-        beqz    $v0, noleft         # add left neighbor to queue
+        bge     $v0, $t0, noxmin    # update chunk boundaries, starting from x min
+        move    $t0, $v0
+noxmin: bge     $v1, $t2, noymin    # y min
+        move    $t2, $v1
+noymin: ble     $v0, $t1, noxmax    # x max
+        move    $t1, $v0
+noxmax: ble     $v1, $t3, noymax    # y max
+        move    $t3, $v1
+        
+noymax: beqz    $v0, noleft         # add left neighbor to queue
         add     $a0, $v0, -1
         move    $a1, $v1
         jal     queue_push
@@ -72,6 +86,11 @@ norigh: beq     $v1, 239, skip      # add bottom neighbor
         
 skip:   jal     queue_empty         # break if there are no more pixels to explore
         beqz    $v0, exloop
+        
+        sh      $t0, 0($s6)         # store chunk boundaries
+        sh      $t1, 2($s6)
+        sh      $t2, 4($s6)
+        sh      $t3, 6($s6)
         
         move    $a0, $s6            # restore arguments and return to caller
         move    $a1, $s5
