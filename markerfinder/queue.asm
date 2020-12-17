@@ -9,6 +9,7 @@ qend:   .half   0                   # next available element of the queue
         .text
         .globl queue_push
         .globl queue_pop
+        .globl queue_empty
         
 queue_push:
         lh      $t9, qend           # load queue end position
@@ -31,3 +32,14 @@ increm: beq     $t9, 1916, rollov   # roll over if end of array reached
 
 rollov: sh      $zero, 0($t8)       # reset index and store it at destination
         jr      $ra                 # return to caller
+
+queue_empty:
+        lh      $t9, qstart         # load queue start position
+        lh      $t8, qend           # load queue end position
+        
+        beq     $t9, $t8, empty     # if empty, return 1, otherwise return 0
+        li      $v0, 0
+        jr      $ra
+        
+empty:  li      $v0, 1
+        jr      $ra
