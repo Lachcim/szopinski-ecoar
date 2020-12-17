@@ -13,8 +13,7 @@ err4:   .asciiz "Only 24-bit BMP files are supported"
         .globl read_bitmap
         
 read_bitmap:
-        move    $t8, $a1            # move arguments to temp registers
-        move    $t9, $a2
+        move    $t9, $a1            # save argument 1 in temp register
         
         li      $v0, 13             # open input file for reading
         li      $a1, 0              # (fname in $a0)
@@ -39,13 +38,11 @@ read_bitmap:
         bne     $t0, 24, dsper4
         
         ulw     $t0, buffer + 18    # extract width and height
-        sh      $t0, 0($t9)
         ulw     $t1, buffer + 22
-        sh      $t1, 0($a3)
         
         add     $t2, $t1, -1        # obtain pointer to the first pixel
         mul     $t2, $t2, 320       # (lower left corner of the bitmap)
-        add     $t2, $t2, $t8       # imgbuf + (height - 1) * 320
+        add     $t2, $t2, $t9       # imgbuf + (height - 1) * 320
         
         mul     $t1, $t0, $t1       # calculate the number of pixels to be read (width * height)
         li      $t3, 0              # position in the current line
