@@ -11,7 +11,7 @@ find_chunk:
         lw      $s0, nextin         # load next index to check
         add     $t0, $a1, $s0       # obtain pointer to buffer at index
 
-pxloop: beq     $s0, 76799, fail    # stop search if end of buffer reached
+pxloop: beq     $s0, 76800, fail    # stop search if end of buffer reached
         
         lb      $t1, 0($t0)         # dereference buffer pointer
         bne     $t1, 1, cont        # continue if pixel not black
