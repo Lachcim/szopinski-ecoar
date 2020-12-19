@@ -15,7 +15,6 @@ validate_chunk:
         sub     $s4, $s1, $s0       # calculate chunk width and height (minus 1)
         sub     $t0, $s3, $s2
         bne     $s4, $t0, reject    # reject if chunk is not square
-        beqz    $s4, reject         # reject single pixel chunks
         
         mul     $t0, $s2, 320       # obtain pointer to upper right corner of chunk
         add     $t0, $t0, $s1
