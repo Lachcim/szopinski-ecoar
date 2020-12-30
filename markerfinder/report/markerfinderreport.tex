@@ -1,0 +1,400 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\setlength{\parskip}{1em}
+
+\begin{document}
+
+	\title{ECOAR project report\\Visual marker detection utility
+	\\written in MIPS assembly}
+	\author{Michał Szopiński}
+	\date{December 18, 2020}
+	\maketitle
+	
+	\setcounter{section}{-1}
+	\section{Abstract}
+	
+	This document discusses the implementation details of a MIPS program to
+	detect and locate a specific pattern of pixels within a bitmap.
+	
+	The implementation utilizes a breadth-first search algorithm to quickly
+	discern potential candidates and applies a separate validation subroutine to
+	decide whether a candidate matches the characteristics of a marker.
+	
+	In addition, the program implements a simple BMP/DIB file parser with basic
+	error handling.
+	
+	\newpage
+	\renewcommand{\baselinestretch}{0}\normalsize
+	\tableofcontents
+	\renewcommand{\baselinestretch}{1}\normalsize
+	
+	\newpage
+	\section{Project objectives}
+	
+	The input of the program is an uncompressed 24-bit BMP/DIB file named
+	\texttt{source.bmp}. The image dimensions are $320\times240$ px at the most.
+	
+	Contained within the bitmap are \textbf{markers}, which are groups of pixels
+	that match a specific set of characteristics. An image may contain up to 50
+	such markers, although this implementation has no limitations on the number
+	of markers it can detect.
+	
+	Examples of valid markers:
+	
+	\begin{center}
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/ex1}}
+	\end{center}
+	
+	The location of a marker is given by the point of intersection of its arms,
+	i.e. the top right corner of the figure. The coordinates of each marker
+	are to be printed on separate lines, each coordinate separated by a comma
+	and a space.
+	
+	\subsection{Constraints of a marker}
+	
+	Because the original task is vague about what precisely constitutes a
+	marker, a semi-formal definition of a marker must be introduced to be
+	followed by this implementation.
+	
+	\newtheorem{definition}{Definition}
+	\begin{definition}
+		\label{def:marker}
+  		A marker is a continuous group of black pixels that can be constructed
+		by drawing a black square and cutting away a smaller square from its
+		bottom left corner. The group must not directly neighbor any black
+		pixel.
+	\end{definition}
+	
+	\newpage
+	\subsection{Examples of valid markers}
+	
+	What follows from the above definition is that markers may vary in size
+	(width and height) and thickness:
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/exsize}}
+		\caption{Valid markers of varying size and constant thickness}
+	\end{figure}
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/exthick}}
+		\caption{Valid markers of varying thickness and constant size}
+	\end{figure}
+	
+	Furthermore, the definition places no constraints on the white space
+	surrounding the markers (short of direct adjacency), which means that the
+	rectangle occupied by a marker may also contain other black pixels.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/exdistractor}}
+		\caption{Two valid markers with ``distractors"}
+		\label{fig:distractors}
+	\end{figure}
+	
+	\newpage
+	Markers may also overlap.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/exoverlap}}
+		\caption{Three overlapping markers}
+	\end{figure}
+	
+	\subsection{Examples of invalid markers}
+	
+	Markers must not touch other black pixels (diagonal neighbors are
+	acceptable).
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/extouch}}
+		\caption{Markers invalidated by direct neighbors}
+	\end{figure}
+	
+	Markers must be continuous and obtainable by cutting away a square from a
+	square.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{markers/exirreg}}
+		\caption{Markers invalidated by irregularities}
+	\end{figure}
+	
+	\newpage
+	\section{Program flow overview}
+	
+	\subsection{Modules}
+	
+	The program is modular in nature, with each module providing distinct data
+	processing functionality. The main module is the entry point of the program.
+	It coordinates the exchange of data between each of its child modules.
+	
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.75\textwidth]{figs/structure}
+		\caption{Module hierarchy}
+	\end{figure}
+	
+	Each module exposes a global subroutine for the parent module to call as
+	necessary.
+	
+	\subsection{Top-level algorithm}
+	\label{sec:topalg}
+	
+	The main module executes the following simple algorithm to print the
+	coordinates of all markers within the bitmap:
+	
+	\begin{enumerate}
+		\item The main module statically allocates the image buffer, the chunk
+		boundary buffer and certain text constants, including the input
+		file name.
+		\item The BMP reader is invoked to load the bitmap into the buffer. If a
+		read error occurs, the program is terminated.
+		\item The chunk finder attempts to find an unvisited \textit{chunk},
+		i.e. a continuous group of black pixels. If there are none, the program
+		is terminated.
+		\item The found chunk is validated by the validator module. If it
+		matches the characteristics of a marker, its coordinates are printed.
+		\item Step 3 is repeated.
+	\end{enumerate}
+	
+	\section{BMP reader}
+	
+	\subsection{File IO and header validation}
+	
+	A handle to the input file is obtained by performing a \texttt{syscall} with
+	the argument $13$. If the returned handle is negative, the operation has
+	failed and the program terminates with an error message.
+	
+	The bitmap metadata is extracted based on the following offsets:
+	\begin{center}
+		\begin{tabular}{|c|l|}
+			\hline
+			Offset & Description \\
+			\hline
+			0 & BMP format marker\\
+			14 & DIB header size \\
+			18 & Image width \\
+			22 & Image height \\
+			28 & Bits per pixel \\
+			30 & Compression algorithm \\
+			54 & Raster data \\
+			\hline
+		\end{tabular}
+	\end{center}
+	The header is validated according to the following rules:
+	\begin{enumerate}
+		\item If the format marker doesn't match the string \texttt{BM}
+		(little-endian value \texttt{0x4D42}), terminate with an ``unrecognized
+		file format" error.
+		\item If the header size isn't 40 (standard Windows NT format) or the
+		compression isn't 0 (none), terminate with an ``unsupported BMP format"
+		error.
+		\item If the bits per pixel number isn't 24, terminate with an
+		``unsupported bit depth" error.
+	\end{enumerate}
+	
+	\subsection{Raster data extraction}
+	
+	Because a BMP file may contain additional metadata at the end, the number
+	of pixels to be read is calculated from the width and the height of the
+	image.
+	
+	The reading process starts by obtaining a pointer to the buffer element
+	corresponding to the lower left corner of the bitmap. Pixels are then read
+	in lines, and with each pixel, the pointer moves to the right.
+	
+	The RGB composition of each pixel is analyzed and, if it is all-black, the
+	value 1 is assigned to its position in the buffer. A non-black pixel has an
+	assigned value of 0.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{figs/buffer}}
+		\caption{A visual representation of how a bitmap is loaded into the
+		buffer. Pixel marked 1 is loaded first, pixel marked 2 is loaded last.
+		Pixel 0 marks the start of the buffer.}
+	\end{figure}
+	
+	Once the end of a line is reached, the buffer pointer is moved to the start
+	of the preceding line. Moreover, the byte padding present at the end of
+	rows in an uncompressed BMP file is read and discarded.
+	
+	Finally, once all pixels have been read, the file handle is closed and
+	control is returned to the main module.
+	
+	\newpage
+	\section{Chunk finder}
+	
+	\subsection{Chunk discovery (buffer scanning)}
+	
+	As described in section~\ref{sec:topalg}, the program repeatedly searches
+	for unvisited candidates for markers.
+	
+	The algorithm for finding them is very simple: the bitmap is searched from
+	the top left to the bottom right, and each time a value of 1 is discovered,
+	the index of discovery is noted for further processing.
+	
+	If the end of the buffer is reached before a chunk is found, the search
+	stops and the subroutine returns a value of 0 to the caller.
+	
+	To optimize the operation, the chunk finding module keeps track of the next
+	index to start the search from. This value is stored in a statically
+	allocated variable.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{figs/scan}}
+		\caption{Illustration marking the order and location of discovery}
+	\end{figure}
+	
+	The reason why this approach doesn't result in the repeated discovery of the
+	same chunk is detailed in the next section.
+	
+	\newpage
+	\subsection{Chunk exploration (breadth-first search)}
+	\label{sec:bfs}
+	
+	Immediately following the discovery of a chunk, an exploration subroutine
+	is invoked to determine the shape and the bounding rectangle of the chunk.
+	
+	Knowing a single initial point of entry, the remaining pixels of a chunk can
+	be discovered by implementing a breadth-first search (BFS) algorithm on the
+	two-dimensional graph represented by the buffer.
+	
+	The algorithm inspects the immediate neighbors of the entry point and checks
+	their color (their value in the buffer) to determine whether they are a part
+	of the newly discovered chunk. If so, their subsequent neighbors are also
+	queued for inspection and the algorithm reiterates.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{figs/bfs}}
+		\caption{The order of inspection using BFS. Lighter pixels mark elements
+		inspected later. Zeros mark entry points. Ones mark elements currently
+		queued for inspection.}
+	\end{figure}
+	
+	Upon inspection, all discovered elements, including the entry point, are
+	assigned a color of 2. This serves several purposes:
+	\begin{enumerate}
+		\item Prevents the BFS from infinitely looping over the same nodes,
+		since only elements with a color of 1 are queued for inspection.
+		\item Allows the validation algorithm to discern local black pixels
+		from foreign black pixels (``distractors" demonstrated in
+		fig.~\ref{fig:distractors}).
+		\item Prevents the chunk discovery algorithm from discovering the same
+		chunk more than once.
+	\end{enumerate}
+	
+	The BFS algorithm operates on the framework of coordinates, which can be
+	translated to buffer indices when the time comes to inspect the color of an
+	element. This allows the program to update the bounding rectangle of a chunk
+	whenever a node is visited.
+	
+	Once the inspection queue is empty, the algorithm terminates. The bounding
+	rectangle and the updated image buffer can then be passed to the validation
+	subroutine for pattern matching.
+	
+	\subsection{FIFO queue}
+	
+	Frequently mentioned in section~\ref{sec:bfs} is the concept of ``queuing"
+	elements for inspection. In this context, ``queuing" means storing them and
+	retrieving them in the order in which they were stored, i.e. first in, first
+	out (FIFO).
+	
+	The data structure providing this functionality is implemented as a
+	continuous memory region combined with two indices: a start index and an
+	end index. The basic queue operations are implemented as follows:
+	\begin{itemize}
+		\item Push -- The new element is placed at the end index and the end
+		index is incremented.
+		\item Pop -- The element is retrieved from the start index and the start
+		index is incremented.
+		\item IsEmpty -- The queue is considered empty if the start index is
+		equal to the end index.
+	\end{itemize}
+	
+	If, during incrementation, one of the indices exceeds the bounds of the
+	memory block, the offending index is reset to zero. This allows the queue to
+	wrap around its physical limits and store as many elements as can fit inside
+	the region.
+	
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{figs/queue}}
+		\caption{A visual representation of a queue wrapping around its bounds.
+		0 marks the start index, 1 marks the end index, dark gray marks the
+		elements, light gray marks free space.}
+	\end{figure}
+	
+	Because the queue is used to store pairs of coordinates, the module
+	implementing the queue accepts arguments and returns values in pairs of
+	half-words. The queue itself is defined as an array of words, and the proper
+	address translation is done at access time.
+	
+	\newpage
+	\section{Validator}
+	
+	The validation subroutine inspects the updated image buffer and the chunk's
+	bounding rectangle to determine whether the selected chunk constitutes a
+	valid marker.
+	
+	The output of this subroutine is a Boolean value denoting the validity of
+	the marker. Furthermore, the image buffer is updated and all elements of
+	color 2 are assigned a color of 3. Again, this serves to differentiate
+	between local and foreign black pixels during later calls to the subroutine.
+	
+	In the context of the validity check, ``black" refers to the color 2.
+	Any pixel with a color other than 2, including 1 and 3, is considered white.
+	
+	\subsection{Initial checks}
+	
+	Two simple checks can be conducted to immediately reject candidates before
+	thoroughly inspecting their body. If any of the following is true, the
+	candidate is rejected:
+	\begin{enumerate}
+		\item The bounding rectangle isn't square.
+		\item The top right corner isn't black.
+	\end{enumerate}
+	These conditions follow from def.~\ref{def:marker}.
+	
+	\subsection{Radial continuity check}
+	
+	Having established that the candidate may have two arms of equal length and
+	a thickness of at least one, all that remains is to check its body for
+	discontinuities, i.e. white pixels inside the arms or black pixels outside
+	the arms.
+	
+	The check starts at the top right corner and verifies the continuity of the
+	horizontal arm, followed by the vertical arm. After that, it moves
+	diagonally to the next intersection and repeats. The offset of the start
+	point from the top right corner is referred to as the ``radius".
+	
+	\newpage
+	\begin{figure}[h]
+		\centering
+		\fbox{\includegraphics[width=0.5\textwidth]{figs/radius}}
+		\caption{A schematic of the continuity check. Light gray marks the
+		horizontal arm, dark gray marks the vertical arm, numbers mark the
+		radius.}
+	\end{figure}
+	
+	At the start of each radius, the color of the intersection is probed. If the
+	color is white, it means that the continuity of the arms has been verified
+	and from now on, only white pixels are allowed.
+	
+	Once the vertical arm of the final radius has been verified, one final check
+	is performed. If the radial check hasn't detected a white intersection by
+	now, what follows is that the chunk is solid black. As such, it fails to
+	meet the criteria of def.~\ref{def:marker} and is rejected as a marker.
+	
+	If all the checks have been passed, control is returned to the main module
+	and the coordinates of the marker are printed.
+	
+\end{document}
