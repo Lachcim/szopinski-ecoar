@@ -12,14 +12,14 @@ static const char* const errors[] = {
 int main(int argc, char** argv) {
 	//check for required argument
 	if (argc < 2) {
-		fprintf(stderr, errors[0]);
+		fputs(errors[0], stderr);
 		return 1;
 	}
 	
 	//open file for reading
 	FILE* file = fopen(argv[1], "r");
 	if (file == 0) {
-		fprintf(stderr, errors[1]);
+		fputs(errors[1], stderr);
 		return 2;
 	}
 	
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 	
 	//print marker locations or error message on error
 	if (foundMarkers < 0) {
-		fprintf(stderr, errors[-foundMarkers]);
+		fputs(errors[-foundMarkers], stderr);
 		return 1 - foundMarkers;
 	}
 	for (int i = 0; i < foundMarkers; i++)
