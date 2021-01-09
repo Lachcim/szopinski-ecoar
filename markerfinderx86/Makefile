@@ -1,5 +1,19 @@
-find_markers: find_markers.o
-	gcc find_markers.o -o find_markers
+c_source = $(wildcard *.c)
+asm_source = $(wildcard *.asm)
+
+c_objects = $(c_source:.c=.o)
+asm_objects = $(asm_source:.asm=.o)
+
+find_markers: $(c_objects) $(asm_objects)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -m32 -o $@
 	
-find_markers.o: main.c
-	gcc -c main.c -o find_markers.o
+%.o: %.c
+	$(CC) -c $(CFLAGS) $^ -m32 -o $@
+
+%.o: %.asm
+	nasm -f elf -o $@ $^
+
+.PHONY: clean
+clean:
+	rm *.o
+	rm find_markers
