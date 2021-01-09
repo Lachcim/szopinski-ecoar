@@ -15,5 +15,5 @@ find_markers: $(c_objects) $(asm_objects)
 
 .PHONY: clean
 clean:
-	rm *.o
-	rm find_markers
+	rm -f *.o
+	rm -f find_markers
