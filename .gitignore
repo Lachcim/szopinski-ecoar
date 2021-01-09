@@ -13,3 +13,8 @@
 .*.lb
 
 *.pdf
+
+# C build output
+*.o
+*.exe
+find_markers
