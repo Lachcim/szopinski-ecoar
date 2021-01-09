@@ -28,11 +28,8 @@ int main(int argc, char** argv) {
 	long fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 	
-	//allocate file content buffer, ensure sufficient space for bitmap buffer
-	if (fileSize < 322 * 242) fileSize = 322 * 242;
-	unsigned char* bitmap = malloc(fileSize);
-	
 	//read file to buffer and close handle
+	unsigned char* bitmap = malloc(fileSize);
 	fread(bitmap, 1, fileSize, file);
 	fclose(file);
 	
