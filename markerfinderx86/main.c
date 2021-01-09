@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 	//print marker locations or error message on error
 	if (foundMarkers < 0) {
 		fprintf(stderr, errors[-foundMarkers]);
-		return -foundMarkers;
+		return 1 - foundMarkers;
 	}
 	for (int i = 0; i < foundMarkers; i++)
 		printf("%d, %d\n", xPos[i], yPos[i]);
