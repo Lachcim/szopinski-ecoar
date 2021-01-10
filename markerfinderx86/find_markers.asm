@@ -6,7 +6,7 @@
 SECTION .text
         GLOBAL find_markers
         EXTERN read_bitmap
-        EXTERN malloc
+        EXTERN calloc
         EXTERN free
         
 find_markers:
@@ -14,9 +14,11 @@ find_markers:
         mov         ebp, esp
         push        ebx                 ; preserve callee-saved registers
 
-        push        77924               ; allocate memory for a 322*242 bitmap buffer
-        call        malloc
-        add         esp, 4              ; pop buffer size from stack
+        sub         esp, 12             ; align stack
+        push        1                   ; allocate memory for a 322*242 bitmap buffer
+        push        77924               ; num (322*242) times size (1)
+        call        calloc
+        add         esp, 20             ; pop arguments and padding from stack
         push        eax                 ; push buffer address to stack
         
         sub         esp, 8              ; align stack
