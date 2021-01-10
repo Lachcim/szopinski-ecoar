@@ -1,3 +1,9 @@
+/*
+	MAIN.C
+	Entry point of the program. Performs file I/O and stdout/stderr I/O, calls
+	external assembly function.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
