@@ -9,6 +9,9 @@ static const char* const errors[] = {
 	"Only 24-bit BMP files are supported\n"
 };
 
+extern int find_markers(unsigned char* bitmap, unsigned int* xPos,
+	unsigned int* yPos);
+
 int main(int argc, char** argv) {
 	//check for required argument
 	if (argc < 2) {
@@ -38,7 +41,7 @@ int main(int argc, char** argv) {
 	unsigned int* yPos = malloc(sizeof(int) * 50);
 	
 	//find markers
-	int foundMarkers = 42;
+	int foundMarkers = find_markers(bitmap, xPos, yPos);
 	
 	//print marker locations or error message on error
 	if (foundMarkers < 0) {
