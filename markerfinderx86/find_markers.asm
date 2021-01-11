@@ -28,7 +28,8 @@ find_markers:
         mov         [esp], eax              ; load address of newly allocated bitmap buffer
         call        read_bitmap             ; parse raw buffer into bitmap buffer
         
-        cmp         eax, 0                  ; return if bitmap read failed (negative eax)
+        mov         ebx, eax                ; set error code as return value
+        cmp         ebx, 0                  ; return if bitmap read failed (non-zero error code)
         jne         .exit
         
         mov         ebx, 0                  ; marker counter
