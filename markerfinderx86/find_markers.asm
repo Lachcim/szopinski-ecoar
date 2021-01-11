@@ -10,36 +10,39 @@ SECTION .text
         EXTERN free
         
 find_markers:
-        push        ebp                 ; create new stack frame
+        push        ebp                     ; create new stack frame
         mov         ebp, esp
-        push        ebx                 ; preserve callee-saved registers
-
-        sub         esp, 12             ; align stack
-        push        1                   ; allocate memory for a 322*242 bitmap buffer
-        push        77924               ; num (322*242) times size (1)
+        
+        push        ebx                     ; preserve callee-saved registers
+        push        esi
+        push        edi
+        sub         esp, 12                 ; maintain constant stack alignment
+        
+        mov         [esp + 4], DWORD 1      ; allocate memory for a 322*242 bitmap buffer
+        mov         [esp], DWORD 77924      ; num (322*242) times size (1)
         call        calloc
-        add         esp, 20             ; pop arguments and padding from stack
-        push        eax                 ; push buffer address to stack
         
-        sub         esp, 8              ; align stack
-        push        eax                 ; push address of bitmap buffer again
-        push        DWORD [ebp + 8]     ; push address of raw buffer
-        call        read_bitmap         ; parse raw buffer into bitmap buffer
-        add         esp, 16             ; pop arguments and padding from stack
+        mov         ebx, DWORD [ebp + 8]    ; load address of raw buffer
+        mov         [esp + 4], ebx
+        mov         [esp], eax              ; load address of newly allocated bitmap buffer
+        call        read_bitmap             ; parse raw buffer into bitmap buffer
         
-        cmp         eax, 0              ; return if bitmap read failed (negative eax)
+        cmp         eax, 0                  ; return if bitmap read failed (negative eax)
         js          .exit
         
-        mov         ebx, [ebp + 12]     ; set third xpos to 123
+        mov         ebx, [ebp + 12]         ; set third xpos to 123
         lea         ebx, [ebx + 8]
         mov         DWORD [ebx], 123
         
-.exit:  mov         ebx, eax            ; preserve return value across call
-        call        free                ; free bitmap buffer
-        add         esp, 4              ; pop buffer address from pointer
-        mov         eax, ebx            ; restore return value
+.exit:  mov         ebx, eax                ; preserve return value across call
+        call        free                    ; free bitmap buffer
+        mov         eax, ebx                ; restore return value
         
-        pop         ebx                 ; restore callee-saved registers
-        mov         esp, ebp            ; restore old stack frame
+        add         esp, 12                 ; restore stack pointer
+        pop         edi                     ; restore callee-saved registers
+        pop         esi
+        pop         ebx
+        
+        mov         esp, ebp                ; restore old stack frame
         pop         ebp
         ret

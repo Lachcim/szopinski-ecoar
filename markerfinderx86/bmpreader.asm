@@ -10,7 +10,7 @@ read_bitmap:
         push        esi                     ; save registers
         push        edi
         
-        mov         esi, DWORD [ebp + 8]    ; set pointer to start of buffer
+        mov         esi, DWORD [ebp + 12]   ; set pointer to start of buffer
         
         mov         ax, WORD [esi]          ; verify BMP header
         cmp         ax, 0x4D42
@@ -33,7 +33,7 @@ read_bitmap:
         mov         eax, 322                ; set destination pointer to lower left corner
         mul         DWORD [esp]             ; plus a margin of one column and one row
         add         eax, 1
-        mov         edi, DWORD [ebp + 12]   ; initialize as start of buffer and add offset
+        mov         edi, DWORD [ebp + 8]    ; initialize as start of buffer and add offset
         add         edi, eax
         
         mov         eax, DWORD [esp + 4]    ; calculate padding bytes as width mod 3
