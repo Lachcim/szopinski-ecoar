@@ -8,6 +8,7 @@ nexti:  dd          322                     ; index to start the search at
 
 SECTION .text
         GLOBAL locate_marker
+        EXTERN validate_marker
 
 locate_marker:
         push        ebp                     ; create new stack frame
@@ -20,13 +21,13 @@ locate_marker:
         
 .seek:  mov         al, [esi]               ; dereference source pointer
         cmp         al, 1                   ; if not black, continue search                  
-        jne         .scont
+        jne         .cont
         
         mov         [esp], esi              ; call validation subroutine and obtain (width - 1)
         call        validate_marker
         
         cmp         eax, 0                  ; if the width is negative, the marker is invalid
-        js          .sinvl
+        js          .inval
 
         mov         ecx, [nexti]            ; save current index
         add         DWORD [nexti], eax      ; increment start index
@@ -40,11 +41,11 @@ locate_marker:
         dec         edx
         jmp         .exit                   ; return to caller
         
-.sinvl  not         eax                     ; invert ~width to obtain (width - 1)
+.inval  not         eax                     ; invert -width to obtain (width - 1)
         add         esi, eax                ; add (width - 1) to pointer and index
         add         DWORD [nexti], eax
         
-.scont: inc         esi                     ; increment source pointer and index
+.cont:  inc         esi                     ; increment source pointer and index
         inc         DWORD [nexti]
         
         cmp         DWORD [nexti], 77602    ; if index reached margin, fail
@@ -54,16 +55,6 @@ locate_marker:
 .fail:  mov         eax, -1
 .exit:  add         esp, 4                  ; restore stack pointer
         pop         esi                     ; restore registers
-        mov         esp, ebp                ; restore old stack frame
-        pop         ebp
-        ret
-
-validate_marker:
-        push        ebp                     ; create new stack frame
-        mov         ebp, esp
-        
-        mov         eax, 1
-        
         mov         esp, ebp                ; restore old stack frame
         pop         ebp
         ret
