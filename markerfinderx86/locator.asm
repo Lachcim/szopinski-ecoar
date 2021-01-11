@@ -22,25 +22,32 @@ locate_marker:
         cmp         al, 1                   ; if not black, continue search                  
         jne         .scont
         
-        mov         [esp], esi              ; call validation subroutine and obtain width
+        mov         [esp], esi              ; call validation subroutine and obtain (width - 1)
         call        validate_marker
         
-        cmp         eax, 0                  ; if the width is negative, the marker was invalid
-        js          .scont
+        cmp         eax, 0                  ; if the width is negative, the marker is invalid
+        js          .sinvl
+
+        mov         ecx, [nexti]            ; save current index
+        add         DWORD [nexti], eax      ; increment start index
+        add         DWORD [nexti], 1
         
-        mov         eax, [nexti]            ; add width to current index
+        add         eax, ecx                ; get index of arm intersection (current index + width - 1)
         mov         edx, 0                  ; divide by buffer width to obtain coordinates
         mov         ecx, 322
         div         ecx
         dec         eax                     ; subtract buffer margin
         dec         edx
-        add         DWORD [nexti], 1        ; start from next pixel next time
-        jmp         .exit
+        jmp         .exit                   ; return to caller
+        
+.sinvl  not         eax                     ; invert ~width to obtain (width - 1)
+        add         esi, eax                ; add (width - 1) to pointer and index
+        add         DWORD [nexti], eax
         
 .scont: inc         esi                     ; increment source pointer and index
         inc         DWORD [nexti]
         
-        cmp         DWORD [nexti], 77601    ; if index reached margin, fail
+        cmp         DWORD [nexti], 77602    ; if index reached margin, fail
         je          .fail
         jmp         .seek                   ; otherwise seek next marker
         
