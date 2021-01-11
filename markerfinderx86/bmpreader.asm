@@ -7,8 +7,7 @@ SECTION .text
 read_bitmap:
         push        ebp                     ; create new stack frame
         mov         ebp, esp
-        push        ebx                     ; save registers
-        push        esi
+        push        esi                     ; save registers
         push        edi
         
         mov         esi, DWORD [ebp + 8]    ; set pointer to start of buffer
@@ -30,12 +29,12 @@ read_bitmap:
         push        DWORD [esi + 22]        ; line counter initialized to height
         mov         ecx, DWORD [esp + 4]    ; column counter initialized to width
         
+        add         esi, 54                 ; move source pointer to first pixel
         mov         eax, 322                ; set destination pointer to lower left corner
-        mul         DWORD [esi + 22]        ; plus a margin of one column and one row
+        mul         DWORD [esp]             ; plus a margin of one column and one row
         add         eax, 1
         mov         edi, DWORD [ebp + 12]   ; initialize as start of buffer and add offset
         add         edi, eax
-        add         esi, 54                 ; move source pointer to first pixel
         
         mov         eax, DWORD [esp + 4]    ; calculate padding bytes as width mod 3
         and         eax, 3
@@ -74,7 +73,6 @@ read_bitmap:
         
 .exit:  pop         edi                     ; restore registers
         pop         esi
-        pop         ebx
         mov         esp, ebp                ; restore old stack frame
         pop         ebp
         ret
