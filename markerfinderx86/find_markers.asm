@@ -6,6 +6,7 @@
 SECTION .text
         GLOBAL find_markers
         EXTERN read_bitmap
+        EXTERN locate_marker
         EXTERN calloc
         EXTERN free
         
@@ -28,15 +29,25 @@ find_markers:
         call        read_bitmap             ; parse raw buffer into bitmap buffer
         
         cmp         eax, 0                  ; return if bitmap read failed (negative eax)
-        js          .exit
+        jne         .exit
         
-        mov         ebx, [ebp + 12]         ; set third xpos to 123
-        lea         ebx, [ebx + 8]
-        mov         DWORD [ebx], 123
+        mov         ebx, 0                  ; marker counter
+        mov         esi, [ebp + 12]         ; xpos iterator
+        mov         edi, [ebp + 16]         ; ypos iterator
         
-.exit:  mov         ebx, eax                ; preserve return value across call
-        call        free                    ; free bitmap buffer
-        mov         eax, ebx                ; restore return value
+.find:  call        locate_marker           ; find next marker
+        cmp         eax, -1                 ; if there are none, exit
+        je          .exit
+        
+        mov         [esi], eax              ; append to xpos and ypos
+        mov         [edi], edx
+        
+        inc         ebx                     ; increment counter and iterators
+        add         esi, 4
+        add         edi, 4
+        
+.exit:  call        free                    ; free bitmap buffer
+        mov         eax, ebx                ; return marker counter
         
         add         esp, 12                 ; restore stack pointer
         pop         edi                     ; restore callee-saved registers
