@@ -28,13 +28,13 @@ find_markers:
         add         esp, 16             ; pop arguments and padding from stack
         
         cmp         eax, 0              ; return if bitmap read failed (negative eax)
-        js          exit
+        js          .exit
         
         mov         ebx, [ebp + 12]     ; set third xpos to 123
         lea         ebx, [ebx + 8]
         mov         DWORD [ebx], 123
         
-exit:   mov         ebx, eax            ; preserve return value across call
+.exit:  mov         ebx, eax            ; preserve return value across call
         call        free                ; free bitmap buffer
         add         esp, 4              ; pop buffer address from pointer
         mov         eax, ebx            ; restore return value
