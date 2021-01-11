@@ -40,12 +40,13 @@ find_markers:
         cmp         eax, -1                 ; if there are none, exit
         je          .exit
         
-        mov         [esi], eax              ; append to xpos and ypos
-        mov         [edi], edx
+        mov         [esi], edx              ; append to xpos and ypos
+        mov         [edi], eax
         
         inc         ebx                     ; increment counter and iterators
         add         esi, 4
         add         edi, 4
+        jmp         .find                   ; reiterate
         
 .exit:  call        free                    ; free bitmap buffer
         mov         eax, ebx                ; return marker counter
