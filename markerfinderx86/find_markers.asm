@@ -23,7 +23,7 @@ find_markers:
         mov         [esp], DWORD 77924      ; num (322*242) times size (1)
         call        calloc
         
-        mov         ebx, DWORD [ebp + 8]    ; load address of raw buffer
+        mov         ebx, [ebp + 8]          ; load address of raw buffer
         mov         [esp + 4], ebx
         mov         [esp], eax              ; load address of newly allocated bitmap buffer
         call        read_bitmap             ; parse raw buffer into bitmap buffer

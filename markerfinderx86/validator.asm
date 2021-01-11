@@ -19,7 +19,7 @@ validate_marker:
         mov         al, [esi]               ; dereference pointer
         cmp         al, 1                   ; iterate until white encountered
         je          .width
-        mov         DWORD [esp + 4], ecx    ; save width
+        mov         [esp + 4], ecx          ; save width
         
         sub         esi, 323                ; move to above top right corner
 .top:   mov         al, [esi]               ; check clearance above horizontal arm
@@ -34,7 +34,7 @@ validate_marker:
         mov         al, [esi]
         cmp         al, 1
         je          .girth
-        mov         DWORD [esp], ecx        ; save girth
+        mov         [esp], ecx              ; save girth
         
         mov         eax, [esp + 4]          ; load marker width
         shl         ecx, 1                  ; multiply girth by 2
@@ -56,7 +56,7 @@ validate_marker:
         add         edi, 322
         loop        .hsid
         
-        mov         ecx, DWORD [esp]        ; reset counter to girth
+        mov         ecx, [esp]              ; reset counter to girth
         inc         esi                     ; move pointer to bottom of horizontal arm
 .hbott: mov         al, [esi]               ; check clearance under the arm
         cmp         al, 0
@@ -64,7 +64,7 @@ validate_marker:
         inc         esi
         loop        .hbott
         
-        mov         ecx, DWORD [esp]        ; reset counter to girth
+        mov         ecx, [esp]              ; reset counter to girth
         mov         edi, esi                ; move pointers to sides of vertical arm
         add         edi, ecx
         dec         esi                     
@@ -78,7 +78,7 @@ validate_marker:
         add         edi, 322
         loop        .vsid
         
-        mov         ecx, DWORD [esp]        ; reset counter to girth
+        mov         ecx, [esp]              ; reset counter to girth
         inc         esi                     ; move pointer to bottom of vertical arm
 .bottm: mov         al, [esi]               ; check clearance under the arm
         cmp         al, 0
@@ -86,30 +86,30 @@ validate_marker:
         inc         esi
         loop        .bottm
         
-        mov         edi, DWORD [esp]        ; y counter
-        mov         ecx, DWORD [esp + 4]    ; x counter
+        mov         edi, [esp]              ; y counter
+        mov         ecx, [esp + 4]          ; x counter
         mov         esi, [ebp + 8]          ; move pointer to top left
 .hcont: mov         al, [esi]               ; check continuity of horizontal arm
         cmp         al, 1
         jne         .fail
         inc         esi
         loop        .hcont
-        mov         ecx, DWORD [esp + 4]    ; reset x counter
+        mov         ecx, [esp + 4]          ; reset x counter
         sub         esi, [esp + 4]          ; move to start of next line
         add         esi, 322
         dec         edi                     ; decrement y counter
         cmp         edi, 0
         jne         .hcont
         
-        mov         edi, DWORD [esp]        ; y counter
-        mov         ecx, DWORD [esp]        ; x counter
+        mov         edi, [esp]              ; y counter
+        mov         ecx, [esp]              ; x counter
         add         esi, [esp]              ; move to top left of vertical arm
 .vcont: mov         al, [esi]               ; check continuity of the arm
         cmp         al, 1
         jne         .fail
         inc         esi
         loop        .vcont
-        mov         ecx, DWORD [esp]        ; reset x counter
+        mov         ecx, [esp]              ; reset x counter
         sub         esi, [esp]              ; move to start of next line
         add         esi, 322
         dec         edi                     ; decrement y counter

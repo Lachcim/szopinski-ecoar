@@ -30,8 +30,8 @@ locate_marker:
         js          .inval
 
         mov         ecx, [nexti]            ; save current index
-        add         DWORD [nexti], eax      ; increment start index
-        add         DWORD [nexti], 1
+        add         [nexti], eax            ; increment start index
+        add         [nexti], DWORD 1
         
         add         eax, ecx                ; get index of arm intersection (current index + width - 1)
         mov         edx, 0                  ; divide by buffer width to obtain coordinates
@@ -43,12 +43,12 @@ locate_marker:
         
 .inval  not         eax                     ; invert -width to obtain (width - 1)
         add         esi, eax                ; add (width - 1) to pointer and index
-        add         DWORD [nexti], eax
+        add         [nexti], eax
         
 .cont:  inc         esi                     ; increment source pointer and index
         inc         DWORD [nexti]
         
-        cmp         DWORD [nexti], 77602    ; if index reached margin, fail
+        cmp         [nexti], DWORD 77602    ; if index reached margin, fail
         je          .fail
         jmp         .seek                   ; otherwise seek next marker
         
