@@ -42,6 +42,50 @@ validate_marker:
         jne         .fail
         shr         ecx, 1
         
+        mov         esi, [ebp + 8]          ; move pointers to sides of horizontal arm
+        dec         esi
+        mov         edi, [ebp + 8]
+        add         edi, [esp + 4]
+.hsid:  mov         al, [esi]               ; check clearance to the sides of the arm
+        cmp         al, 0
+        jne         .fail
+        mov         al, [edi]
+        cmp         al, 0
+        jne         .fail
+        add         esi, 322
+        add         edi, 322
+        loop        .hsid
+        
+        mov         ecx, DWORD [esp]        ; reset counter to girth
+        inc         esi                     ; move pointer to bottom of horizontal arm
+.hbott: mov         al, [esi]               ; check clearance under the arm
+        cmp         al, 0
+        jne         .fail
+        inc         esi
+        loop        .hbott
+        
+        mov         ecx, DWORD [esp]        ; reset counter to girth
+        mov         edi, esi                ; move pointers to sides of vertical arm
+        add         edi, ecx
+        dec         esi                     
+.vsid:  mov         al, [esi]               ; check clearance to the sides of the arm
+        cmp         al, 0
+        jne         .fail
+        mov         al, [edi]
+        cmp         al, 0
+        jne         .fail
+        add         esi, 322
+        add         edi, 322
+        loop        .vsid
+        
+        mov         ecx, DWORD [esp]        ; reset counter to girth
+        inc         esi                     ; move pointer to bottom of vertical arm
+.bottm: mov         al, [esi]               ; check clearance under the arm
+        cmp         al, 0
+        jne         .fail
+        inc         esi
+        loop        .bottm
+        
         jmp         .ok
         
 .fail:  mov         eax, [esp + 4]          ; return -width
