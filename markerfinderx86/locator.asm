@@ -13,6 +13,7 @@ locate_marker:
         push        ebp                     ; create new stack frame
         mov         ebp, esp
         push        esi                     ; preserve registers
+        sub         esp, 4                  ; align stack
         
         mov         esi, [ebp + 8]          ; set esi as pointer to start location
         add         esi, [nexti]
@@ -21,11 +22,19 @@ locate_marker:
         cmp         al, 1                   ; if not black, continue search                  
         jne         .scont
         
-        mov         eax, [nexti]
-        mov         edx, 0
+        mov         [esp], esi              ; call validation subroutine and obtain width
+        call        validate_marker
+        
+        cmp         eax, 0                  ; if the width is negative, the marker was invalid
+        js          .scont
+        
+        mov         eax, [nexti]            ; add width to current index
+        mov         edx, 0                  ; divide by buffer width to obtain coordinates
         mov         ecx, 322
         div         ecx
-        add         DWORD [nexti], 1
+        dec         eax                     ; subtract buffer margin
+        dec         edx
+        add         DWORD [nexti], 1        ; start from next pixel next time
         jmp         .exit
         
 .scont: inc         esi                     ; increment source pointer and index
@@ -36,7 +45,18 @@ locate_marker:
         jmp         .seek                   ; otherwise seek next marker
         
 .fail:  mov         eax, -1
-.exit:  pop         esi                     ; restore registers
+.exit:  add         esp, 4                  ; restore stack pointer
+        pop         esi                     ; restore registers
+        mov         esp, ebp                ; restore old stack frame
+        pop         ebp
+        ret
+
+validate_marker:
+        push        ebp                     ; create new stack frame
+        mov         ebp, esp
+        
+        mov         eax, 1
+        
         mov         esp, ebp                ; restore old stack frame
         pop         ebp
         ret
