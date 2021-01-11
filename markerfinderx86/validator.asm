@@ -86,6 +86,36 @@ validate_marker:
         inc         esi
         loop        .bottm
         
+        mov         edi, DWORD [esp]        ; y counter
+        mov         ecx, DWORD [esp + 4]    ; x counter
+        mov         esi, [ebp + 8]          ; move pointer to top left
+.hcont: mov         al, [esi]               ; check continuity of horizontal arm
+        cmp         al, 1
+        jne         .fail
+        inc         esi
+        loop        .hcont
+        mov         ecx, DWORD [esp + 4]    ; reset x counter
+        sub         esi, [esp + 4]          ; move to start of next line
+        add         esi, 322
+        dec         edi                     ; decrement y counter
+        cmp         edi, 0
+        jne         .hcont
+        
+        mov         edi, DWORD [esp]        ; y counter
+        mov         ecx, DWORD [esp]        ; x counter
+        add         esi, [esp]              ; move to top left of vertical arm
+.vcont: mov         al, [esi]               ; check continuity of the arm
+        cmp         al, 1
+        jne         .fail
+        inc         esi
+        loop        .vcont
+        mov         ecx, DWORD [esp]        ; reset x counter
+        sub         esi, [esp]              ; move to start of next line
+        add         esi, 322
+        dec         edi                     ; decrement y counter
+        cmp         edi, 0
+        jne         .vcont
+        
         jmp         .ok
         
 .fail:  mov         eax, [esp + 4]          ; return -width
@@ -97,7 +127,7 @@ validate_marker:
 
 .exit:  add         esp, 8                  ; pop local variables
         pop         edi                     ; restore registers
-        pop         esi                     ; restore registers
+        pop         esi
         mov         esp, ebp                ; restore old stack frame
         pop         ebp
         ret
