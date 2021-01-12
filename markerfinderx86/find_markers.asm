@@ -1,13 +1,20 @@
 ; FIND_MARKERS.ASM
-; Main function exposed to C. Allocates bitmap buffer and coordinates work.
-; Modifies input buffers and returns the number of found markers (or an error
-; code).
+; Main function exposed to C. Modifies input buffers and returns the number of
+; found markers (or an error code).
+
+SECTION .data  
+        GLOBAL buf
+        GLOBAL bufw
+        GLOBAL bufsiz
+
+buf:    dd          0                       ; pointer to bitmap buffer
+bufw:   dd          0                       ; buffer width and size
+bufsiz: dd          0
 
 SECTION .text
         GLOBAL find_markers
         EXTERN read_bitmap
         EXTERN locate_marker
-        EXTERN calloc
         EXTERN free
         
 find_markers:
@@ -19,13 +26,8 @@ find_markers:
         push        edi
         sub         esp, 12                 ; maintain constant stack alignment
         
-        mov         [esp + 4], DWORD 1      ; allocate memory for a 322*242 bitmap buffer
-        mov         [esp], DWORD 77924      ; num (322*242) times size (1)
-        call        calloc
-        
         mov         ebx, [ebp + 8]          ; load address of raw buffer
-        mov         [esp + 4], ebx
-        mov         [esp], eax              ; load address of newly allocated bitmap buffer
+        mov         [esp], ebx              ; pass it as argument to read_bitmap
         call        read_bitmap             ; parse raw buffer into bitmap buffer
         
         mov         ebx, eax                ; set error code as return value
@@ -38,7 +40,7 @@ find_markers:
         
 .find:  call        locate_marker           ; find next marker
         cmp         eax, -1                 ; if there are none, exit
-        je          .exit
+        je          .stop
         
         mov         [esi], edx              ; append to xpos and ypos
         mov         [edi], eax
@@ -48,8 +50,11 @@ find_markers:
         add         edi, 4
         jmp         .find                   ; reiterate
         
-.exit:  call        free                    ; free bitmap buffer
-        mov         eax, ebx                ; return marker counter
+.stop:  mov         eax, [buf]              ; load buffer pointer as argument to free
+        mov         [esp], eax
+        call        free                    ; free bitmap buffer
+        
+.exit:  mov         eax, ebx                ; return marker counter or error code
         
         add         esp, 12                 ; restore stack pointer
         pop         edi                     ; restore callee-saved registers

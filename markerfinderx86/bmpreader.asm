@@ -1,8 +1,14 @@
 ; BMPREADER.ASM
-; Parses raw input buffer into abstract bitmap buffer.
+; Parses raw input buffer into abstract bitmap buffer. Allocates the buffer.
+
+SECTION .data
+        EXTERN buf
+        EXTERN bufw
+        EXTERN bufsiz
 
 SECTION .text
         GLOBAL read_bitmap
+        EXTERN calloc
         
 read_bitmap:
         push        ebp                     ; create new stack frame
@@ -10,7 +16,7 @@ read_bitmap:
         push        esi                     ; save registers
         push        edi
         
-        mov         esi, [ebp + 12]         ; set pointer to start of buffer
+        mov         esi, [ebp + 8]          ; set pointer to start of raw buffer
         
         mov         ax, [esi]               ; verify BMP header
         cmp         ax, 0x4D42
@@ -25,15 +31,30 @@ read_bitmap:
         cmp         ax, 24
         jne         .fail4
         
+        mov         eax, [esi + 18]         ; set bitmap buffer parameters
+        add         eax, 2
+        mov         [bufw], eax             ; width = image width + 2
+        mov         eax, [esi + 22]         ; height = image height + 2
+        add         eax, 2
+        mul         DWORD [bufw]            ; multiply bufh by bufw to obtain size
+        mov         [bufsiz], eax
+        
+        sub         esp, 16                 ; align stack
+        mov         [esp + 4], DWORD 1      ; element size
+        mov         [esp], eax              ; element count (bufsize)
+        call        calloc                  ; allocate bitmap buffer
+        add         esp, 16                 ; pop arguments and padding
+        mov         [buf], eax              ; set static buffer pointer
+        
         push        DWORD [esi + 18]        ; image width
         push        DWORD [esi + 22]        ; line counter initialized to height
         mov         ecx, [esp + 4]          ; column counter initialized to width
         
         add         esi, 54                 ; move source pointer to first pixel
-        mov         eax, 322                ; set destination pointer to lower left corner
+        mov         eax, [bufw]             ; set destination pointer to lower left corner
         mul         DWORD [esp]             ; plus a margin of one column and one row
         add         eax, 1
-        mov         edi, [ebp + 8]          ; initialize as start of buffer and add offset
+        mov         edi, [buf]              ; initialize as start of buffer and add offset
         add         edi, eax
         
         mov         eax, [esp + 4]          ; calculate padding bytes as width mod 3
@@ -52,7 +73,7 @@ read_bitmap:
         inc         edi
         loop        .paint                  ; loop until end of line reached
         
-        sub         edi, 322                ; reset dst pointer to start of previous line
+        sub         edi, [bufw]             ; reset dst pointer to start of previous line
         sub         edi, [esp + 4]
         mov         ecx, [esp + 4]          ; reset column counter to image width
         add         esi, eax                ; skip padding bytes

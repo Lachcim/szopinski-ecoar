@@ -2,6 +2,9 @@
 ; Check whether the given pointer points to a valid marker. Returns (width - 1)
 ; on success and (-width) on failure.
 
+SECTION .data
+        EXTERN bufw
+
 SECTION .text
         GLOBAL validate_marker
 
@@ -21,7 +24,8 @@ validate_marker:
         je          .width
         mov         [esp + 4], ecx          ; save width
         
-        sub         esi, 323                ; move to above top right corner
+        sub         esi, [bufw]             ; move to above top right corner
+        dec         esi
 .top:   mov         al, [esi]               ; check clearance above horizontal arm
         cmp         al, 0
         jne         .fail
@@ -30,7 +34,7 @@ validate_marker:
         
         mov         esi, [ebp + 8]          ; return to top left
 .girth: inc         ecx                     ; get marker girth
-        add         esi, 322
+        add         esi, [bufw]
         mov         al, [esi]
         cmp         al, 1
         je          .girth
@@ -52,8 +56,8 @@ validate_marker:
         mov         al, [edi]
         cmp         al, 0
         jne         .fail
-        add         esi, 322
-        add         edi, 322
+        add         esi, [bufw]
+        add         edi, [bufw]
         loop        .hsid
         
         mov         ecx, [esp]              ; reset counter to girth
@@ -74,8 +78,8 @@ validate_marker:
         mov         al, [edi]
         cmp         al, 0
         jne         .fail
-        add         esi, 322
-        add         edi, 322
+        add         esi, [bufw]
+        add         edi, [bufw]
         loop        .vsid
         
         mov         ecx, [esp]              ; reset counter to girth
@@ -96,7 +100,7 @@ validate_marker:
         loop        .hcont
         mov         ecx, [esp + 4]          ; reset x counter
         sub         esi, [esp + 4]          ; move to start of next line
-        add         esi, 322
+        add         esi, [bufw]
         dec         edi                     ; decrement y counter
         cmp         edi, 0
         jne         .hcont
@@ -111,7 +115,7 @@ validate_marker:
         loop        .vcont
         mov         ecx, [esp]              ; reset x counter
         sub         esi, [esp]              ; move to start of next line
-        add         esi, 322
+        add         esi, [bufw]
         dec         edi                     ; decrement y counter
         cmp         edi, 0
         jne         .vcont

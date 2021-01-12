@@ -3,6 +3,9 @@
 ; edx, returns -1 if there are no more markers.
 
 SECTION .data
+        EXTERN buf
+        EXTERN bufw
+        EXTERN bufsiz
 
 nexti:  dd          322                     ; index to start the search at
 
@@ -16,7 +19,7 @@ locate_marker:
         push        esi                     ; preserve registers
         sub         esp, 4                  ; align stack
         
-        mov         esi, [ebp + 8]          ; set esi as pointer to start location
+        mov         esi, [buf]              ; set esi as pointer to start location
         add         esi, [nexti]
         
 .seek:  mov         al, [esi]               ; dereference source pointer
@@ -35,7 +38,7 @@ locate_marker:
         
         add         eax, ecx                ; get index of arm intersection (current index + width - 1)
         mov         edx, 0                  ; divide by buffer width to obtain coordinates
-        mov         ecx, 322
+        mov         ecx, [bufw]
         div         ecx
         dec         eax                     ; subtract buffer margin
         dec         edx
@@ -48,7 +51,8 @@ locate_marker:
 .cont:  inc         esi                     ; increment source pointer and index
         inc         DWORD [nexti]
         
-        cmp         [nexti], DWORD 77602    ; if index reached margin, fail
+        mov         eax, [bufsiz]           ; if index reached end of buffer, fail
+        cmp         [nexti], eax
         je          .fail
         jmp         .seek                   ; otherwise seek next marker
         
